@@ -37,8 +37,13 @@ class NavigatorNode(BaseNavigator):
         control = TurtleBotControl()
         dt = t - self.t_prev
         
-        x_d, xd_d, xdd_d = splev(t, plan.path_x_spline, der=[0, 1, 2])
-        y_d, yd_d, ydd_d = splev(t, plan.path_y_spline, der=[0, 1, 2])
+        x_d = splev(t, plan.path_x_spline, der=0)
+        xd_d = splev(t, plan.path_x_spline, der=1)
+        xdd_d = splev(t, plan.path_x_spline, der=2)
+        
+        y_d = splev(t, plan.path_y_spline, der=0)
+        yd_d = splev(t, plan.path_y_spline, der=1)
+        ydd_d = splev(t, plan.path_y_spline, der=2)
 
         u1 = xdd_d + self.kpx * (x_d - state.x) + self.kdx * (xd_d - self.V_prev * np.cos(state.theta))
         u2 = ydd_d + self.kpy * (y_d - state.y) + self.kdy * (yd_d - self.V_prev * np.sin(state.theta))
@@ -299,7 +304,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 

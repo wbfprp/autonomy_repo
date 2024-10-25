@@ -16,11 +16,7 @@ class HeadingController(BaseHeadingController):
     def __init__(self) -> None:
 				# initialize base class (must happen before everything else)
         super().__init__("HeadingController")
-        # self.kp = 2.0
-        
-        # Declares a parameter named 'my_int' and sets it to a default value of 7
-        self.declare_parameter("kp", 2.0)
-
+        self.kp = 2.0
 				
 
 		# 		# create publisher with: self.create_publisher(<msg type>, <topic>, <qos>)
@@ -31,14 +27,6 @@ class HeadingController(BaseHeadingController):
 
         # self.motor_sub = self.create_subscription(Bool, "/kill", self.kill_callback, 10)
          
-    @property
-    def kp(self) -> float:
-        """ Get real-time parameter value of maximum velocity
-
-        Returns:
-            float: latest parameter value of maximum velocity
-        """
-        return self.get_parameter("kp").value
     # def hb_callback(self) -> None:
 				
     #     # construct HeadingController message
@@ -69,11 +57,22 @@ class HeadingController(BaseHeadingController):
         Returns:
             TurtleBotControl: control command
         """
-        err = goal.theta - state.theta
+        err = goal._theta - state._theta
         w = self.kp * err
         output = TurtleBotControl()
         output.omega = w
         return output
+        pass
+
+        
+    def kill_callback(self, msg: Bool) -> None:
+        
+        if msg.data:
+            self.get_logger().fatal("HeadingController stopped")
+            self.hb_timer.cancel()
+            msg2 = Twist()
+            self.hb_pub.publish(msg2)
+        
 
 
 
