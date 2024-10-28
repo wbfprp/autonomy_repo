@@ -18,11 +18,16 @@ class PerceptionController(BaseController):
         super().__init__("PerceptionController")
         # self.kp = 2.0
         self.prev_time = self.get_clock().now().nanoseconds / 1e9
+        # self.prev_detector_time = self.get_clock().now().nanoseconds / 1e9
+        self.prev_active = False
+        self.enable_detector = True
         # Declares a parameter named 'my_int' and sets it to a default value of 7
         self.declare_parameter("kp", 2.0)
         # Set a parameter named 'my_float' to 7.0
         self.declare_parameter("active", True)
         
+        self.detector_sub = self.create_subscription(Bool, "/detector_bool", self.detector_callback, 10)
+
 
 				
 
@@ -75,23 +80,53 @@ class PerceptionController(BaseController):
             TurtleBotControl: control command
         """
         current_time = self.get_clock().now().nanoseconds / 1e9
-
-        if current_time > self.prev_time + 5:
-            self.set_parameters([rclpy.Parameter("active", value=(not self.active))])
-            self.prev_time = current_time
         
-
-        
-        if self.active:
+        if self.get_parameter("active").value:
             w = 0.5
-        else:
+        else:  
             w = 0.0
+        
+        if current_time > self.prev_time + 5 and current_time < self.prev_time + 7:
+            self.get_logger().info(str(self.get_parameter("active").value))
+            w = 0.5
+            self.set_parameters([rclpy.Parameter("active", value=True)])
+            self.enable_detector = False
+        elif current_time > self.prev_time + 7:
+            self.prev_time = current_time
+            self.set_parameters([rclpy.Parameter("active", value=True)])
+            self.enable_detector = True
+            
+        # if current_time > self.prev_time + 5:
+        #     if not self.prev_active:
+        #         self.prev_detector_time = current_time
+        #     self.set_parameters([rclpy.Parameter("active", value=(not self.active))])
+            
+        #     self.prev_time = current_time
+        #     if self.prev_active:
+        #         self.enable_detector = True
+        
+        # if current_time > self.prev_detector_time + 1:
+        #     self.enable_detector = True
+        
+        # if self.active is not self.prev_active:
+        #     self.prev_time = current_time
+        #     self.prev_active = self.active
+                
         output = TurtleBotControl()
         output.omega = w
 
         return output
 
-
+    def detector_callback(self, msg: Bool) -> None:
+        """
+        Sensor health callback triggered by subscription
+        """
+        if msg.data and self.enable_detector:
+            self.enable_detector = False
+            self.prev_time = self.get_clock().now().nanoseconds / 1e9
+            self.set_parameters([rclpy.Parameter("active", value=False)])
+        
+        
 
 if __name__ == "__main__":
     rclpy.init()        # initialize ROS2 context (must run before any other rclpy call)
