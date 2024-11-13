@@ -41,7 +41,7 @@ class ICPNode(Node):
         self.pose = None
         self.lidar_pose = None
         self.transformation = None
-        self.use_open3d = True
+        self.use_open3d = False
         self.pcd_sub = self.create_subscription(PointCloud2, "/velodyne_points", self.pcd_callback, 10)
         self.marker_pub = self.create_publisher(Marker, "/marker", 10)
         
