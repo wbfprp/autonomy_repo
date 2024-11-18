@@ -89,7 +89,7 @@ class FrontierExploration(Node):
         if self.nav_success:
             self.get_logger().info('Navigation succeeded. Exploring next frontier.')
             self.is_planned = False
-            self.explore_next_frontier()
+            # self.explore_next_frontier()
 
     def explore(self, occupancy):
         # Copied and pasted from HW4 - P2
