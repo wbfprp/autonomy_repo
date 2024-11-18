@@ -1,0 +1,1 @@
+/home/hsh/autonomy_ws/src/autonomy_repo/build/autonomy_repo/ament_cmake_environment_hooks/local_setup.zsh
