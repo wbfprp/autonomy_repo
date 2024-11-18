@@ -20,7 +20,7 @@ class NavigatorNode(BaseNavigator):
         self.kpy = 2.0
         self.kdy = 2.0
 
-        self.V_PREV_THRES = 0.0001
+        self.V_PREV_THRES = 0.001
 
     def compute_heading_control(self, state: TurtleBotState, goal: TurtleBotState) -> TurtleBotControl:
         """ Compute heading control based on the goal state. """
@@ -304,7 +304,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
 

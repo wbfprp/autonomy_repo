@@ -16,15 +16,6 @@ class FrontierExploration(Node):
     def __init__(self):
         super().__init__('frontier_explorer')
 
-        # Parameters
-        # self.map_topic = self.declare_parameter('map_topic', '/map').value
-        # self.state_topic = self.declare_parameter('state_topic', '/state').value
-        # self.nav_success_topic = self.declare_parameter('nav_success_topic', '/nav_success').value
-        # self.to = self.declare_parameter('to', 600.0).value
-        
-        # self.planned_path_pub = self.create_publisher(Path, "/planned_path", 10)
-        # self.smoothed_path_pub = self.create_publisher(Path, "/smoothed_path", 10)
-
 
         # Subscribers
         self.map_sub = self.create_subscription(OccupancyGrid, "/map", self.map_callback, 10)
@@ -41,15 +32,6 @@ class FrontierExploration(Node):
         self.nav_success = True
         self.is_planned = False
         self.plan = None
-        # self.to = 60.0
-
-        # Timer to check exploration timeout
-        # self.timer = self.create_timer(1.0, self.exploration_timer_callback)
-        # self.start_time = self.get_clock().now()
-
-
-    def snap_to_grid(state, resolution):
-        return resolution * np.round(state / resolution)
 
     def map_callback(self, msg: OccupancyGrid) -> None:
         # create occupancy map
@@ -57,43 +39,28 @@ class FrontierExploration(Node):
             resolution=msg.info.resolution,
             size_xy=np.array([msg.info.width, msg.info.height]),
             origin_xy=np.array([msg.info.origin.position.x, msg.info.origin.position.y]),
-            window_size=9,
+            window_size=7,
             probs=msg.data,
         )
         # self.get_logger().info("Map received!")
-        self.frontiers = self.explore(self.occupancy)
-        if not self.is_planned:
-            self.explore_next_frontier()
-
-        # Recalculate frontiers based on the updated map
         
-
-        # # If there are no valid frontiers, log the status
-        # if not self.frontiers:
-        #     self.get_logger().info('No frontiers available for exploration.')
-        #     return
-
-        #ERROR
-        # # Trigger replanning if needed
-        # if self.is_planned and not all([self.occupancy.is_free(state) for state in self.plan.path[1:]]):
-        #     self.is_planned = False
-        #     self.get_logger().info('Replanning due to new map update.')
-        #     self.explore_next_frontier()
-
     def state_callback(self, msg):
         # Update state
         self.state = msg
 
     def nav_success_callback(self, msg):
         self.nav_success = msg.data
-        if self.nav_success:
-            self.get_logger().info('Navigation succeeded. Exploring next frontier.')
-            self.is_planned = False
-            # self.explore_next_frontier()
+        
+        # if self.nav_success:
+        self.frontiers = self.explore(self.occupancy)
+        # if not self.is_planned:
+        self.explore_next_frontier()
+        self.get_logger().info('Navigation succeeded. Exploring next frontier.')
+        self.is_planned = False
 
     def explore(self, occupancy):
         # Copied and pasted from HW4 - P2
-        window_size = occupancy.window_size
+        window_size = 13
         probs = occupancy.probs
         kernel = np.ones((window_size, window_size))
 
@@ -119,7 +86,9 @@ class FrontierExploration(Node):
 
     def explore_next_frontier(self):
         # move robot to the closest frontier
+        self.get_logger().info("e_n_f called")
         if (self.frontiers is not None) and (self.state is not None):
+            self.get_logger().info("inside")
             
             distances = np.linalg.norm(self.frontiers - np.array([self.state.x, self.state.y]), axis=1)
 
@@ -127,17 +96,14 @@ class FrontierExploration(Node):
             goal = TurtleBotState()
             goal.x = next_frontier[0]
             goal.y = next_frontier[1]
-            goal.theta = np.arctan2(goal.y - self.state.y, goal.x - self.state.x)
+            # goal.theta = np.arctan2(goal.y - self.state.y, goal.x - self.state.x)
+            goal.theta = 0.0
             self.goal_pub.publish(goal)
             self.is_planned = True
         else:
             self.get_logger().info("No frontiers found")
+            rclpy.shutdown()
 
-    # def exploration_timer_callback(self):
-    #     elapsed_time = (self.get_clock().now() - self.start_time).nanoseconds / 1e9
-    #     if elapsed_time > self.to:
-    #         self.get_logger().info('EXPLORATION TIMEOUT!!')
-    #         self.destroy_node()
 
 
 def main(args=None):
